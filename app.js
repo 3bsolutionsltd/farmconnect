@@ -293,7 +293,7 @@ async function hydrateContracts() {
 
 function render() {
   const route = location.hash.slice(1) || (state.user ? "dashboard" : "home");
-  if (route === "home" && !state.user) {
+  if (route === "home") {
     app.innerHTML = landingView();
   } else {
     app.innerHTML = `
@@ -429,11 +429,14 @@ function viewFor(route) {
 
 function landingView() {
   const assistantOpen = state.assistantOpen !== false;
+  const accountAction = state.user
+    ? '<a class="button primary landing-signin" href="#dashboard">Open dashboard</a>'
+    : '<button class="button primary landing-signin" type="button" data-action="open-signup">Sign in / Register</button>';
   return `<div class="landing-shell">
     <header class="landing-topbar">
       <a class="landing-brand" href="#home" aria-label="FarmConnect home"><span class="landing-mark">&#127793;</span><span>Farm<span>Connect</span></span></a>
       <nav class="landing-nav" aria-label="Public navigation"><a class="active" href="#home">Home</a><button type="button" data-action="scroll-home-section" data-target="landing-platform">Explore Platform</button><button type="button" data-action="scroll-home-section" data-target="landing-how">How it Works</button></nav>
-      <div class="landing-actions"><span class="landing-currency">UGX <span aria-hidden="true">&#9662;</span></span><button class="button primary landing-signin" type="button" data-action="open-signup">Sign in / Register</button></div>
+      <div class="landing-actions"><span class="landing-currency">UGX <span aria-hidden="true">&#9662;</span></span>${accountAction}</div>
     </header>
     <main class="landing-main" id="main-content" tabindex="-1">
       <section class="landing-hero" aria-labelledby="landing-title"><div class="hero-orbit hero-orbit-one"></div><div class="hero-orbit hero-orbit-two"></div><div class="hero-content"><div class="hero-mark">&#127793;</div><p class="eyebrow landing-eyebrow">AGRICULTURAL DIGITAL INFRASTRUCTURE</p><h1 id="landing-title">Empowering agriculture, together.</h1><p>FarmConnect connects producers, enterprises, sites, buyers, and trusted partners so agricultural work can grow with clarity and evidence.</p><button class="button landing-hero-button" type="button" data-action="open-signup">Join FarmConnect today <span aria-hidden="true">&#8594;</span></button></div></section>
