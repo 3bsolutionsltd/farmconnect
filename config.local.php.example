@@ -1,0 +1,24 @@
+<?php
+
+// Copy this file to config.local.php on the server if environment variables
+// are not available in the Hostinger PHP configuration.
+return [
+    'env' => 'production',
+    'app_url' => 'https://farmconnect.3bs.ltd',
+    'allowed_origins' => ['https://farmconnect.3bs.ltd'],
+    'mobile_token_days' => 90,
+    'db' => [
+        'host' => 'localhost',
+        'port' => 3306,
+        'name' => 'farmconnect',
+        'user' => 'replace_me',
+        'password' => 'replace_me',
+    ],
+    // This file is git-ignored. Replace these values for local account provisioning.
+    'local_accounts' => [
+        'admin_password' => 'replace_with_10_or_more_characters',
+        'supplier_password' => 'replace_with_10_or_more_characters',
+        'buyer_password' => 'replace_with_10_or_more_characters',
+        'supplier_organisation_id' => 1,
+    ],
+];

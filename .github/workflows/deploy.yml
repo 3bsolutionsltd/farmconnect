@@ -1,0 +1,93 @@
+name: Deploy FarmConnect
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: farmconnect-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate application
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo_mysql
+
+      - name: Check PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l api/bootstrap.php
+          php -l api/index.php
+          php -l router.php
+
+      - name: Check JavaScript syntax
+        run: node --check app.js
+
+  deploy:
+    name: Deploy to Hostinger
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Load SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+
+      - name: Configure pinned SSH host key
+        shell: bash
+        env:
+          SSH_KNOWN_HOSTS: ${{ secrets.HOSTINGER_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          test -n "$SSH_KNOWN_HOSTS"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Upload application files
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT || 65002 }}
+          REMOTE_PATH: /home/u266222025/domains/3bs.ltd/public_html/farmconnect
+        run: |
+          set -euo pipefail
+          rsync -az \
+            --exclude='config.local.php' \
+            --exclude='.env' \
+            --exclude='*.sql' \
+            --exclude='migrations/' \
+            --exclude='vendor/' \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            -e "ssh -p ${SSH_PORT}" \
+            index.html app.js app.css .htaccess api/ \
+            "${SSH_USER}@${SSH_HOST}:${REMOTE_PATH}/"
+
+      - name: Verify production health endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          response="$(curl --fail --silent --show-error --retry 3 --retry-delay 2 https://farmconnect.3bs.ltd/api/v1/health)"
+          echo "$response"
+          echo "$response" | grep -F '"ok":true' > /dev/null
+          echo "$response" | grep -F '"service":"farmconnect-api"' > /dev/null

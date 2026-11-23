@@ -1,0 +1,73 @@
+name: Run FarmConnect migrations
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    name: Run reviewed migrations
+    runs-on: ubuntu-latest
+    environment: production-migrations
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Load SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+
+      - name: Configure pinned SSH host key
+        shell: bash
+        env:
+          SSH_KNOWN_HOSTS: ${{ secrets.HOSTINGER_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          test -n "$SSH_KNOWN_HOSTS"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Upload migration bundle
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT || 65002 }}
+          REMOTE_PATH: /home/u266222025/domains/3bs.ltd/public_html/farmconnect
+        run: |
+          set -euo pipefail
+          ssh -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" \
+            "mkdir -p '${REMOTE_PATH}/.farmconnect-migrations/migrations' '${REMOTE_PATH}/.farmconnect-migrations/tools'"
+          scp -P "${SSH_PORT}" schema.sql \
+            "${SSH_USER}@${SSH_HOST}:${REMOTE_PATH}/.farmconnect-migrations/schema.sql"
+          scp -P "${SSH_PORT}" -r migrations/. \
+            "${SSH_USER}@${SSH_HOST}:${REMOTE_PATH}/.farmconnect-migrations/migrations/"
+          scp -P "${SSH_PORT}" tools/run-migrations.php \
+            "${SSH_USER}@${SSH_HOST}:${REMOTE_PATH}/.farmconnect-migrations/tools/run-migrations.php"
+
+      - name: Run tracked migrations
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT || 65002 }}
+          REMOTE_PATH: /home/u266222025/domains/3bs.ltd/public_html/farmconnect
+        run: |
+          set -euo pipefail
+          ssh -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" \
+            "cd '${REMOTE_PATH}/.farmconnect-migrations' && FARMCONNECT_APP_ROOT='${REMOTE_PATH}' php tools/run-migrations.php"
+
+      - name: Remove migration bundle
+        if: always()
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT || 65002 }}
+          REMOTE_PATH: /home/u266222025/domains/3bs.ltd/public_html/farmconnect
+        run: |
+          ssh -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" \
+            "rm -rf '${REMOTE_PATH}/.farmconnect-migrations'"
