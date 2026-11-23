@@ -209,3 +209,33 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 @media (max-width: 900px) { .topbar { gap: 18px; } .nav { gap: 2px; overflow-x: auto; scrollbar-width: none; } .nav::-webkit-scrollbar { display: none; } .nav a { flex: 0 0 auto; } }
 @media (max-width: 500px) { .topbar { position: relative; } .nav { justify-content: flex-start; margin: 0 -4px; padding-bottom: 2px; } .nav a { min-height: 38px; padding: 0 9px; font-size: 12px; } .nav a.active::after { right: 9px; bottom: 1px; left: 9px; } .page-shell { padding-top: 38px; } .top-actions { gap: 8px; } }
+
+/* FarmConnect brand integration — preserve existing component dimensions */
+.brand-mark, .landing-mark, .landing-modal-mark, .hero-mark,
+.assistant-avatar, .assistant-launcher, .nursery-image > .nursery-emblem {
+  overflow: visible;
+}
+.brand-mark img, .landing-mark img, .landing-modal-mark img,
+.hero-mark img, .assistant-avatar img, .assistant-launcher img,
+.nursery-emblem img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+.brand-mark, .landing-mark, .landing-modal-mark, .assistant-avatar {
+  padding: 3px;
+  box-sizing: border-box;
+}
+.hero-mark { padding: 8px; box-sizing: border-box; }
+.landing-mark, .landing-modal-mark { background: transparent; box-shadow: none; }
+.brand-mark { background: transparent; border-radius: 0; box-shadow: none; }
+.assistant-avatar { background: #fff; border-radius: 10px; }
+.assistant-launcher { padding: 9px; box-sizing: border-box; background: #fff; }
+.nursery-image > .nursery-emblem {
+  display: grid; place-items: center; width: 46px; height: 46px;
+  padding: 5px; box-sizing: border-box; border-radius: 50%;
+  background: rgba(255,255,255,.96);
+}
+.nursery-emblem img { width: 100%; height: 100%; object-fit: contain; }

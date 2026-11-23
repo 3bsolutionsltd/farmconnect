@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+<title id="title">FarmConnect</title><desc id="desc">FarmConnect logo: abstract F mark with growth motif in green and orange, alongside the FarmConnect wordmark.</desc>
+<g transform="translate(35 32)">
+  <path d="M35 115 C45 50 100 18 205 18 L250 18 C244 68 218 93 173 93 L104 93 C75 93 53 101 35 115Z" fill="#62A914"/>
+  <path d="M24 145 C40 112 72 103 116 103 L220 103 C214 151 189 178 146 178 L93 178 C67 178 48 191 40 218 L20 292 L111 292 L130 225 C137 201 156 187 182 187 L207 187 C197 216 177 239 151 256 C137 265 125 278 119 292 L93 292 L93 315 L20 315Z" fill="#064B35"/>
+  <path d="M132 292 C145 255 171 230 214 216 C201 258 177 288 139 315 L112 315Z" fill="#E98216"/>
+  <path d="M45 225 C63 230 77 244 91 267 C85 244 71 228 45 225Z" fill="none" stroke="#62A914" stroke-width="7" stroke-linecap="round"/>
+  <path d="M91 267 C100 239 119 218 145 204" fill="none" stroke="#62A914" stroke-width="7" stroke-linecap="round"/>
+</g>
+<text x="330" y="232" font-family="Inter, Manrope, Arial, sans-serif" font-size="145" font-weight="750" letter-spacing="-5" fill="#064B35">Farm</text>
+<text x="635" y="232" font-family="Inter, Manrope, Arial, sans-serif" font-size="145" font-weight="750" letter-spacing="-5" fill="#E98216">Connect</text>
+</svg>
