@@ -278,6 +278,7 @@ async function hydrateContracts() {
         buyer: contract.buyer,
         quantity: `${Number(contract.quantity).toLocaleString()} ${contract.unit}`,
         value: money(Number(contract.quantity) * Number(contract.target_price)),
+        valueAmount: Number(contract.quantity) * Number(contract.target_price),
         status: status.charAt(0).toUpperCase() + status.slice(1),
         step: stepByStatus[status] ?? 0,
         updated: contract.updated_at || contract.created_at
@@ -538,9 +539,13 @@ function authView() {
 function dashboardView() {
   const open = state.demands.filter(item => item.status === "Open").length;
   const activeContract = state.contracts[0];
+  const firstName = state.user?.name?.split(/\s+/)[0] || "there";
+  const contractValue = demoMode
+    ? "UGX 2.88m"
+    : money(state.contracts.reduce((total, contract) => total + Number(contract.valueAmount || 0), 0));
   return `<div class="page-shell">
-    <section class="welcome"><div><p class="eyebrow">YOUR ${state.role === "buyer" ? "BUYER" : "FARMER"} WORKSPACE</p><h1>${state.role === "buyer" ? "Good morning, James." : "Your farm network, at a glance."}</h1><p class="muted">${state.role === "buyer" ? "Turn clear demand into reliable supply commitments." : "Find serious buyers and make offers you can deliver."}</p></div>${state.role === "buyer" ? '<a class="button primary" href="#new-demand">+ Post crop demand</a>' : '<a class="button primary" href="#marketplace">Find demand</a>'}</section>
-    <section class="stats"><div><span>Open demand</span><strong>${open}</strong><small>Buyer requests waiting for offers</small></div><div><span>Active contracts</span><strong>${state.contracts.length}</strong><small>Across your network</small></div><div><span>Funds in progress</span><strong>UGX 2.88m</strong><small>Held until delivery confirmation</small></div></section>
+    <section class="welcome"><div><p class="eyebrow">YOUR ${state.role === "buyer" ? "BUYER" : "FARMER"} WORKSPACE</p><h1>${state.role === "buyer" ? `Good morning, ${esc(firstName)}.` : "Your farm network, at a glance."}</h1><p class="muted">${state.role === "buyer" ? "Turn clear demand into reliable supply commitments." : "Find serious buyers and make offers you can deliver."}</p></div>${state.role === "buyer" ? '<a class="button primary" href="#new-demand">+ Post crop demand</a>' : '<a class="button primary" href="#marketplace">Find demand</a>'}</section>
+    <section class="stats"><div><span>Open demand</span><strong>${open}</strong><small>Buyer requests waiting for offers</small></div><div><span>Active contracts</span><strong>${state.contracts.length}</strong><small>Across your network</small></div><div><span>Contract value</span><strong>${contractValue}</strong><small>Across your contracts</small></div></section>
     <div class="content-grid"><section class="panel"><div class="panel-heading"><div><p class="eyebrow">YOUR NETWORK</p><h2>${state.role === "buyer" ? "Demand needing farmers" : "Demand you can fulfil"}</h2></div><a class="text-link" href="#marketplace">View marketplace</a></div>${state.demands.slice(0, 3).map(demandCard).join("")}</section>
       <section class="panel progress-panel"><div class="panel-heading"><div><p class="eyebrow">ACTIVE CONTRACT</p><h2>Production pulse</h2></div><a class="text-link" href="#contracts">View contract</a></div>${activeContract ? contractProgress(activeContract) : emptyState("No active contracts yet.", "Accepted offers will appear here.")}</section></div>
   </div>`;
