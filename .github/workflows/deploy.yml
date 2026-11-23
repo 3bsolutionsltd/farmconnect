@@ -71,6 +71,8 @@ jobs:
           REMOTE_PATH: /home/u266222025/domains/3bs.ltd/public_html/farmconnect
         run: |
           set -euo pipefail
+          ssh -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" \
+            "rm -f '${REMOTE_PATH}/bootstrap.php' '${REMOTE_PATH}/index.php'"
           rsync -az \
             --exclude='config.local.php' \
             --exclude='.env' \
@@ -80,7 +82,7 @@ jobs:
             --exclude='.git/' \
             --exclude='.github/' \
             -e "ssh -p ${SSH_PORT}" \
-            index.html app.js app.css .htaccess api/ \
+            index.html app.js app.css .htaccess api \
             "${SSH_USER}@${SSH_HOST}:${REMOTE_PATH}/"
 
       - name: Verify production health endpoint
