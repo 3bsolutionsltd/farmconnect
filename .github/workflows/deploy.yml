@@ -72,6 +72,8 @@ jobs:
         run: |
           set -euo pipefail
           ssh -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" \
+            "test -f '${REMOTE_PATH}/config.local.php' || { echo 'Missing production config.local.php on Hostinger'; exit 1; }"
+          ssh -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" \
             "rm -f '${REMOTE_PATH}/bootstrap.php' '${REMOTE_PATH}/index.php'"
           rsync -az \
             --exclude='config.local.php' \
