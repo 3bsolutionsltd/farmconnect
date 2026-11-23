@@ -18,7 +18,9 @@ const seedData = {
   orders: []
 };
 
-const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || seedData;
+const demoMode = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const storedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+const state = demoMode ? (storedState || seedData) : { role: "buyer", demands: [], contracts: [], nurseries: [], orders: [] };
 state.demands.forEach(demand => {
   if (!Array.isArray(demand.offers)) {
     demand.offers = Array.from({ length: Number(demand.offers) || 0 }, (_, index) => ({ id: `O-${index + 10}`, farmer: "Network farmer", quantity: demand.quantity, price: demand.price, note: "Offer submitted through FarmConnect." }));
@@ -112,7 +114,10 @@ async function hydrateSession() {
     if (state.user?.role) state.role = state.user.role;
     save();
     render();
-    if (state.user) hydrateOrders();
+    if (state.user) {
+      hydrateOrders();
+      hydrateContracts();
+    }
     if (hasCapability("supplier.catalogue")) hydrateSupplierCatalogue();
     if (state.user?.role === "admin") { hydrateAdminVerifications(); hydrateAdminOrganisations(); hydrateAdminListings(); hydrateAdminProducts(); }
   } catch (error) {
@@ -229,6 +234,59 @@ async function hydrateOrders() {
     if (location.hash === "#orders") render();
   } catch (error) {
     // Keep local demo orders available when the API is unavailable.
+  }
+}
+
+async function hydrateDemands() {
+  try {
+    const response = await fetch("/api/v1/demands", { credentials: "same-origin" });
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (!Array.isArray(payload.demands)) return;
+    state.demands = payload.demands.map(demand => ({
+      id: String(demand.id),
+      crop: demand.crop,
+      quantity: Number(demand.quantity),
+      unit: demand.unit,
+      price: Number(demand.target_price),
+      location: demand.location,
+      delivery: demand.delivery_date,
+      buyer: demand.buyer,
+      status: demand.status === "in_contract" ? "In contract" : "Open",
+      offers: []
+    }));
+    save();
+    if (location.hash === "#marketplace" || location.hash === "#dashboard") render();
+  } catch (error) {
+    // Production shows an empty state when the live demand service is unavailable.
+  }
+}
+
+async function hydrateContracts() {
+  try {
+    const response = await fetch("/api/v1/contracts", { credentials: "same-origin" });
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (!Array.isArray(payload.contracts)) return;
+    state.contracts = payload.contracts.map(contract => {
+      const stepByStatus = { accepted: 0, funded: 1, production: 2, delivery: 3, complete: 4 };
+      const status = String(contract.status || "accepted");
+      return {
+        id: String(contract.id),
+        demand: contract.crop,
+        farmer: contract.farmer,
+        buyer: contract.buyer,
+        quantity: `${Number(contract.quantity).toLocaleString()} ${contract.unit}`,
+        value: money(Number(contract.quantity) * Number(contract.target_price)),
+        status: status.charAt(0).toUpperCase() + status.slice(1),
+        step: stepByStatus[status] ?? 0,
+        updated: contract.updated_at || contract.created_at
+      };
+    });
+    save();
+    if (location.hash === "#contracts" || location.hash === "#dashboard") render();
+  } catch (error) {
+    // Production shows an empty state when the live contract service is unavailable.
   }
 }
 
@@ -1062,6 +1120,36 @@ async function handleSubmit(event) {
     }
     return;
   }
+  if (!demoMode) {
+    const error = event.currentTarget.querySelector(".form-error");
+    try {
+      const response = await fetch("/api/v1/demands", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          crop: String(form.get("crop") || "").trim(),
+          quantity: Number(form.get("quantity")),
+          unit: String(form.get("unit") || "").trim(),
+          target_price: Number(form.get("price")),
+          location: String(form.get("location") || "").trim(),
+          delivery_date: String(form.get("delivery") || ""),
+          notes: String(form.get("notes") || "").trim()
+        })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        if (error) { error.textContent = payload.error || "Unable to post demand."; error.hidden = false; }
+        return;
+      }
+      await hydrateDemands();
+      location.hash = "marketplace";
+      render();
+    } catch (requestError) {
+      if (error) { error.textContent = "The demand service is unavailable. Try again shortly."; error.hidden = false; }
+    }
+    return;
+  }
   state.demands.unshift({ id: `D-${1043 + state.demands.length}`, crop: form.get("crop"), quantity: Number(form.get("quantity")), unit: form.get("unit"), price: Number(form.get("price")), location: form.get("location"), delivery: form.get("delivery"), buyer: "James' Produce Co.", status: "Open", offers: [] });
   save(); location.hash = "marketplace"; render();
 }
@@ -1069,4 +1157,5 @@ async function handleSubmit(event) {
 window.addEventListener("hashchange", render);
 render();
 hydrateNurseries();
+hydrateDemands();
 hydrateSession();
