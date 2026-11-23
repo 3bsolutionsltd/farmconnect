@@ -83,7 +83,7 @@
 .landing-brand > span:last-child span { color: #e98216; }
 .landing-mark, .landing-modal-mark { display: grid; place-items: center; width: 38px; height: 38px; color: #fff; background: #0ca45f; border-radius: 11px; box-shadow: 0 7px 16px rgba(12, 164, 95, .22); font-size: 20px; }
 .landing-nav { display: flex; align-items: center; gap: 5px; margin: auto; }
-.landing-nav a, .landing-nav button { min-height: 38px; padding: 0 11px; color: #61706a; background: transparent; border: 0; border-radius: 6px; font-size: 13px; font-weight: 700; }
+.landing-nav a, .landing-nav button { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 11px; color: #61706a; background: transparent; border: 0; border-radius: 6px; font: inherit; font-size: 13px; font-weight: 700; line-height: 1; text-decoration: none; cursor: pointer; }
 .landing-nav a:hover, .landing-nav button:hover, .landing-nav a:focus-visible, .landing-nav button:focus-visible, .landing-nav .active { color: #0c9d62; background: #eef9f1; }
 .landing-actions { display: flex; align-items: center; gap: 18px; }
 .landing-currency { color: #61706a; font-size: 12px; font-weight: 700; }
