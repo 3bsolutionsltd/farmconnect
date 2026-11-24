@@ -153,6 +153,7 @@
 .assistant-input input { min-height: 38px; padding: 9px 11px; font-size: 12px; }
 .assistant-input button { width: 40px; color: #fff; background: #0ca45f; border: 0; border-radius: 6px; font-size: 18px; cursor: pointer; }
 .assistant-launcher { position: fixed; right: 24px; bottom: 24px; z-index: 14; display: grid; place-items: center; width: 52px; height: 52px; color: #fff; background: #0ca45f; border: 0; border-radius: 50%; box-shadow: 0 10px 22px rgba(12, 164, 95, .3); font-size: 23px; cursor: pointer; }
+.farmy-assistant, .assistant-launcher { display: none !important; }
 .landing-modal-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 22px; background: rgba(10, 28, 19, .72); backdrop-filter: blur(4px); }
 .landing-modal { position: relative; width: min(100%, 450px); max-height: 94vh; overflow: auto; padding: 24px 34px 30px; background: #fff; border: 1px solid #dceee2; border-radius: 8px; box-shadow: 0 30px 80px rgba(0, 0, 0, .24); animation: dialog-in .2s ease both; }
 .landing-modal-close { position: absolute; top: 13px; right: 15px; color: #718078; }

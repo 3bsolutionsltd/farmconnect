@@ -428,7 +428,6 @@ function viewFor(route) {
 }
 
 function landingView() {
-  const assistantOpen = state.assistantOpen !== false;
   const accountAction = state.user
     ? '<a class="button primary landing-signin" href="#dashboard">Open dashboard</a>'
     : '<button class="button primary landing-signin" type="button" data-action="open-signup">Sign in / Register</button>';
@@ -445,7 +444,7 @@ function landingView() {
       <section class="landing-cta"><p class="eyebrow">READY WHEN YOU ARE</p><h2>Bring your next agricultural move into focus.</h2><button class="button landing-hero-button" type="button" data-action="open-signup">Join FarmConnect today <span aria-hidden="true">&#8594;</span></button></section>
     </main>
     <footer class="landing-footer"><div><a class="landing-brand" href="#home"><span class="landing-mark"><img src="/assets/brand/farmconnect-emblem.svg" alt="" /></span><span>Farm<span>Connect</span></span></a><p>Agricultural digital infrastructure for producers, enterprises, markets, and trusted partners.</p></div><div><strong>Explore</strong><a href="#home">Home</a><a href="#marketplace">Marketplace</a><a href="#nursery-network">Nursery Network</a></div><div><strong>Support</strong><a href="#auth">Sign in</a><a href="mailto:support@farmconnect.3bs.ltd">Contact support</a><span>UGX</span></div></footer>
-    ${assistantOpen ? farmyAssistantView() : `<button class="assistant-launcher" type="button" aria-label="Open Farmy Assistant" data-action="open-assistant"><img src="/assets/brand/farmconnect-emblem.svg" alt="" /></button>`}
+    
     ${state.landingAuthModal ? signupModalView() : ""}
   </div>`;
 }
