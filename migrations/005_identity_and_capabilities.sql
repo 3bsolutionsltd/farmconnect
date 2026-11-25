@@ -1,11 +1,11 @@
-CREATE TABLE capabilities (
+CREATE TABLE IF NOT EXISTS capabilities (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(120) NOT NULL UNIQUE,
     description VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-CREATE TABLE user_capabilities (
+CREATE TABLE IF NOT EXISTS user_capabilities (
     user_id BIGINT UNSIGNED NOT NULL,
     capability_id BIGINT UNSIGNED NOT NULL,
     status ENUM('active', 'revoked') NOT NULL DEFAULT 'active',
@@ -18,7 +18,7 @@ CREATE TABLE user_capabilities (
     INDEX idx_user_capabilities_status (user_id, status)
 ) ENGINE=InnoDB;
 
-CREATE TABLE external_identities (
+CREATE TABLE IF NOT EXISTS external_identities (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
     provider VARCHAR(80) NOT NULL,
