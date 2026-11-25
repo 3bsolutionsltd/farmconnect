@@ -308,19 +308,39 @@ try {
         if ($productId <= 0 || $price <= 0 || $quantity < 0) {
             jsonResponse(['error' => 'Product, positive price, and valid stock are required.'], 422);
         }
+        $product = db()->prepare("SELECT id FROM agricultural_products WHERE id = ? AND status = 'active' LIMIT 1");
+        $product->execute([$productId]);
+        if (!$product->fetch()) {
+            jsonResponse(['error' => 'Choose an active catalogue product.'], 422);
+        }
+        $varietyId = (int) ($body['variety_id'] ?? 0);
+        if ($varietyId > 0) {
+            $variety = db()->prepare("SELECT id FROM product_varieties WHERE id = ? AND product_id = ? AND status = 'active' LIMIT 1");
+            $variety->execute([$varietyId, $productId]);
+            if (!$variety->fetch()) {
+                jsonResponse(['error' => 'Choose a variety belonging to the selected product.'], 422);
+            }
+        }
         $status = (string) ($body['status'] ?? 'draft');
         if (!in_array($status, ['draft', 'published'], true)) {
             jsonResponse(['error' => 'Listings may start as draft or published.'], 422);
         }
         $pdo = db();
-        $pdo->beginTransaction();
-        $statement = $pdo->prepare("INSERT INTO supplier_listings (supplier_location_id, product_id, variety_id, price, currency, unit, available_quantity, minimum_quantity, status, published_at) VALUES (?, ?, NULLIF(?, 0), ?, ?, ?, ?, ?, ?, CASE WHEN ? = 'published' THEN NOW() ELSE NULL END)");
-        $statement->execute([$supplierLocationId, $productId, (int) ($body['variety_id'] ?? 0), $price, strtoupper((string) ($body['currency'] ?? 'UGX')), $unit, $quantity, max(1, (float) ($body['minimum_quantity'] ?? 1)), $status, $status]);
-        $listingId = (int) $pdo->lastInsertId();
-        if ($quantity > 0) {
-            $pdo->prepare("INSERT INTO inventory_movements (listing_id, movement_type, quantity, note, created_by) VALUES (?, 'opening', ?, ?, ?)")->execute([$listingId, $quantity, 'Opening stock', currentUser()['id']]);
+        try {
+            $pdo->beginTransaction();
+            $statement = $pdo->prepare("INSERT INTO supplier_listings (supplier_location_id, product_id, variety_id, price, currency, unit, available_quantity, minimum_quantity, status, published_at) VALUES (?, ?, NULLIF(?, 0), ?, ?, ?, ?, ?, ?, CASE WHEN ? = 'published' THEN NOW() ELSE NULL END)");
+            $statement->execute([$supplierLocationId, $productId, $varietyId, $price, strtoupper((string) ($body['currency'] ?? 'UGX')), $unit, $quantity, max(1, (float) ($body['minimum_quantity'] ?? 1)), $status, $status]);
+            $listingId = (int) $pdo->lastInsertId();
+            if ($quantity > 0) {
+                $pdo->prepare("INSERT INTO inventory_movements (listing_id, movement_type, quantity, note, created_by) VALUES (?, 'opening', ?, ?, ?)")->execute([$listingId, $quantity, 'Opening stock', currentUser()['id']]);
+            }
+            $pdo->commit();
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
         }
-        $pdo->commit();
         jsonResponse(['id' => $listingId], 201);
     }
 
