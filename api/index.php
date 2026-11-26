@@ -334,12 +334,13 @@ try {
             $currency = strtoupper((string) ($body['currency'] ?? 'UGX'));
             $minimumQuantity = max(1, (float) ($body['minimum_quantity'] ?? 1));
             $sku = 'FC-' . $supplierLocationId . '-' . $productId . '-' . ($varietyId ?: 'ALL') . '-' . bin2hex(random_bytes(3));
+            $publishedAt = $status === 'published' ? date('Y-m-d H:i:s') : null;
             if ($hasSku) {
-                $statement = $pdo->prepare("INSERT INTO supplier_listings (supplier_location_id, product_id, variety_id, sku, price, currency, unit, available_quantity, minimum_quantity, status, published_at) VALUES (?, ?, NULLIF(?, 0), ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 'published' THEN NOW() ELSE NULL END)");
-                $statement->execute([$supplierLocationId, $productId, $varietyId, $sku, $price, $currency, $unit, $quantity, $minimumQuantity, $status, $status]);
+                $statement = $pdo->prepare("INSERT INTO supplier_listings (supplier_location_id, product_id, variety_id, sku, price, currency, unit, available_quantity, minimum_quantity, status, published_at) VALUES (?, ?, NULLIF(?, 0), ?, ?, ?, ?, ?, ?, ?, ?)");
+                $statement->execute([$supplierLocationId, $productId, $varietyId, $sku, $price, $currency, $unit, $quantity, $minimumQuantity, $status, $publishedAt]);
             } else {
-                $statement = $pdo->prepare("INSERT INTO supplier_listings (supplier_location_id, product_id, variety_id, price, currency, unit, available_quantity, minimum_quantity, status, published_at) VALUES (?, ?, NULLIF(?, 0), ?, ?, ?, ?, ?, ?, CASE WHEN ? = 'published' THEN NOW() ELSE NULL END)");
-                $statement->execute([$supplierLocationId, $productId, $varietyId, $price, $currency, $unit, $quantity, $minimumQuantity, $status, $status]);
+                $statement = $pdo->prepare("INSERT INTO supplier_listings (supplier_location_id, product_id, variety_id, price, currency, unit, available_quantity, minimum_quantity, status, published_at) VALUES (?, ?, NULLIF(?, 0), ?, ?, ?, ?, ?, ?, ?)");
+                $statement->execute([$supplierLocationId, $productId, $varietyId, $price, $currency, $unit, $quantity, $minimumQuantity, $status, $publishedAt]);
             }
             $listingId = (int) $pdo->lastInsertId();
             if ($quantity > 0) {
