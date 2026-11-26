@@ -328,17 +328,36 @@ try {
         $pdo = db();
         try {
             $pdo->beginTransaction();
-            $statement = $pdo->prepare("INSERT INTO supplier_listings (supplier_location_id, product_id, variety_id, price, currency, unit, available_quantity, minimum_quantity, status, published_at) VALUES (?, ?, NULLIF(?, 0), ?, ?, ?, ?, ?, ?, CASE WHEN ? = 'published' THEN NOW() ELSE NULL END)");
-            $statement->execute([$supplierLocationId, $productId, $varietyId, $price, strtoupper((string) ($body['currency'] ?? 'UGX')), $unit, $quantity, max(1, (float) ($body['minimum_quantity'] ?? 1)), $status, $status]);
+            $columnCheck = $pdo->prepare("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'supplier_listings' AND COLUMN_NAME IN ('sku')");
+            $columnCheck->execute();
+            $hasSku = $columnCheck->fetchColumn() !== false;
+            $currency = strtoupper((string) ($body['currency'] ?? 'UGX'));
+            $minimumQuantity = max(1, (float) ($body['minimum_quantity'] ?? 1));
+            $sku = 'FC-' . $supplierLocationId . '-' . $productId . '-' . ($varietyId ?: 'ALL') . '-' . bin2hex(random_bytes(3));
+            if ($hasSku) {
+                $statement = $pdo->prepare("INSERT INTO supplier_listings (supplier_location_id, product_id, variety_id, sku, price, currency, unit, available_quantity, minimum_quantity, status, published_at) VALUES (?, ?, NULLIF(?, 0), ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 'published' THEN NOW() ELSE NULL END)");
+                $statement->execute([$supplierLocationId, $productId, $varietyId, $sku, $price, $currency, $unit, $quantity, $minimumQuantity, $status, $status]);
+            } else {
+                $statement = $pdo->prepare("INSERT INTO supplier_listings (supplier_location_id, product_id, variety_id, price, currency, unit, available_quantity, minimum_quantity, status, published_at) VALUES (?, ?, NULLIF(?, 0), ?, ?, ?, ?, ?, ?, CASE WHEN ? = 'published' THEN NOW() ELSE NULL END)");
+                $statement->execute([$supplierLocationId, $productId, $varietyId, $price, $currency, $unit, $quantity, $minimumQuantity, $status, $status]);
+            }
             $listingId = (int) $pdo->lastInsertId();
             if ($quantity > 0) {
-                $pdo->prepare("INSERT INTO inventory_movements (listing_id, movement_type, quantity, note, created_by) VALUES (?, 'opening', ?, ?, ?)")->execute([$listingId, $quantity, 'Opening stock', currentUser()['id']]);
+                $movementType = 'opening';
+                $movementTypeCheck = $pdo->prepare("SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'inventory_movements' AND COLUMN_NAME = 'movement_type'");
+                $movementTypeCheck->execute();
+                $columnType = (string) $movementTypeCheck->fetchColumn();
+                if ($columnType !== '' && strpos($columnType, "'opening'") === false) {
+                    $movementType = 'received';
+                }
+                $pdo->prepare("INSERT INTO inventory_movements (listing_id, movement_type, quantity, note, created_by) VALUES (?, ?, ?, ?, ?)")->execute([$listingId, $movementType, $quantity, 'Opening stock', currentUser()['id']]);
             }
             $pdo->commit();
         } catch (Throwable $exception) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
+            error_log('Catalogue listing creation failed: ' . $exception->getMessage());
             throw $exception;
         }
         jsonResponse(['id' => $listingId], 201);
